@@ -11,4 +11,14 @@ package edu.jsu.mcis.cs310.tas_sp21;
  */
 public class Shift {
     
+    private String id;
+    private String description;
+    private String start;
+    private String stop;
+    private String interval;
+    private String graceperiod;
+    private String dock;
+    private String lunchstart;
+    private String lunchstop;
+    private String lunchdeduct;
 }
