@@ -7,7 +7,7 @@ package edu.jsu.mcis.cs310.tas_sp21;
 
 /**
  *
- * @author Tucker
+ * @author Gage
  */
 public class Badge {
     
@@ -29,7 +29,7 @@ public class Badge {
 
     @Override
     public String toString() {
-        //return "Badge{" + "id=" + id + ", description=" + description + '}';
+       
         StringBuilder s = new StringBuilder();
         
         s.append("#").append(id).append(" ");
