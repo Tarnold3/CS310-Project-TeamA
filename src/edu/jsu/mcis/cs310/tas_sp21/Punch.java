@@ -7,7 +7,7 @@ package edu.jsu.mcis.cs310.tas_sp21;
 
 /**
  *
- * @author Tucker
+ * @author Gage
  */
 public class Punch {
     //"#D2C39273 CLOCKED IN: WED 09/05/2018 07:00:07"
