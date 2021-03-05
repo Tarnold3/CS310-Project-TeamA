@@ -16,7 +16,7 @@ import java.sql.ResultSetMetaData;
  * @author Tucker
  */
 public class TASDatabase {
-    Connection conn;
+    private Connection conn;
     
     public TASDatabase(){
         
@@ -41,7 +41,7 @@ public class TASDatabase {
             
             if(c != null){
                 
-                c.close();
+                c.close(); //close connection
                 
             }
             
@@ -93,28 +93,158 @@ public class TASDatabase {
         catch(Exception e){
             System.err.println(e.toString());
         }
+        finally{
+            if (resultset != null) { try { resultset.close(); resultset = null; } catch (Exception e) {} }
+            
+            if (pstSelect != null) { try { pstSelect.close(); pstSelect = null; } catch (Exception e) {} }
+        }
         
         return badge;
     }
     
     public Shift getShift(int shiftID){
-        Shift shift;
+        Shift shift = null;
         
+        boolean hasResults;
+        PreparedStatement pstSelect = null;
+        ResultSet resultset = null;
+        ResultSetMetaData metadata = null;
         String query;
         
-        //Query the database
+        String idLabel, descLabel, startLabel, stopLabel, intervalLabel, gpLabel,
+                dockLabel, lunchStartLabel, lunchStopLabel, lunchDeductLabel;
         
-        return null;
+        String shiftDesc, shiftStart, shiftStop, shiftInterval, shiftGP,
+                shiftDock, lunchStart, lunchStop, lunchDeduct;
+        
+        int shiftId;
+        
+        try{
+            
+            if(conn.isValid(0)){
+                
+                //Query the database
+                query = "SELECT * FROM shift WHERE id=" + shiftID;
+                pstSelect = conn.prepareStatement(query);
+                hasResults = pstSelect.execute();
+                
+                if(hasResults){
+                    //Retrieve ResultSet Information
+                    resultset = pstSelect.getResultSet();
+                    
+                    //Retrieve Metadata
+                    metadata = resultset.getMetaData();
+                    
+                    //Store column labels
+                    idLabel = metadata.getColumnLabel(0);
+                    descLabel = metadata.getColumnLabel(1);
+                    startLabel = metadata.getColumnLabel(2);
+                    stopLabel = metadata.getColumnLabel(3);
+                    intervalLabel = metadata.getColumnLabel(4);
+                    gpLabel = metadata.getColumnLabel(5);
+                    dockLabel = metadata.getColumnLabel(6);
+                    lunchStartLabel = metadata.getColumnLabel(7);
+                    lunchStopLabel = metadata.getColumnLabel(8);
+                    lunchDeductLabel = metadata.getColumnLabel(9);   
+                    
+                    
+                    //Retrieve and store shift information
+                    shiftId = resultset.getInt(idLabel);
+                    shiftDesc = resultset.getString(descLabel);
+                    shiftStart = resultset.getString(startLabel);
+                    shiftStop = resultset.getString(stopLabel);
+                    shiftInterval = resultset.getString(intervalLabel);
+                    shiftGP = resultset.getString(gpLabel);
+                    shiftDock = resultset.getString(dockLabel);
+                    lunchStart = resultset.getString(lunchStartLabel);
+                    lunchStop = resultset.getString(lunchStopLabel);
+                    lunchDeduct = resultset.getString(lunchDeductLabel);
+                    
+                    
+                    //Populate shift object with shift information
+                    shift = new Shift(shiftId, shiftDesc, shiftStart, shiftStop, 
+                            shiftInterval, shiftGP, shiftDock, lunchStart, 
+                    lunchStop, lunchDeduct);
+                    
+                }
+                
+            }
+            
+        }
+        catch(Exception e){
+            System.err.println(e.toString());
+        }
+        finally{
+            if (resultset != null) { try { resultset.close(); resultset = null; } catch (Exception e) {} }
+            
+            if (pstSelect != null) { try { pstSelect.close(); pstSelect = null; } catch (Exception e) {} }
+        }
+        
+        return shift;
     }
     
     public Shift getShift(Badge badge){
-        Shift shift;
+        Shift shift = null;
         
+        //test variable
+        boolean hasResults;
+        
+        //database objects
+        PreparedStatement pstSelect = null;
+        ResultSet resultset = null;
+        ResultSetMetaData metadata = null;
+        
+        //query variable
         String query;
         
-        //Query the database
+        String badgeId = badge.getId(); //retrieves badge id to connect employee
         
-        return null;
+        String shiftIdLabel; //employee table column label
+        
+        int shiftId;
+        
+        try{
+            
+            if(conn.isValid(0)){
+                
+                //Query the database for employee table
+                query = "SELECT * FROM employee WHERE badgeid=" + badgeId;
+                pstSelect = conn.prepareStatement(query);
+                hasResults = pstSelect.execute();
+                
+                if(hasResults){
+                    
+                    //Retrieve ResultSet Information for employee table
+                    resultset = pstSelect.getResultSet();
+                    
+                    //Retrieve Metadata
+                    metadata = resultset.getMetaData();
+                    
+                    //Store shiftid column label
+                    shiftIdLabel = metadata.getColumnLabel(7);
+                    
+                    //Retrieve and store shift id
+                    shiftId = resultset.getInt(shiftIdLabel);
+                    
+                    
+                    //Query the database for shift table and populate shift object with shift information
+                    shift = getShift(shiftId);
+                     
+                }
+                
+            }
+            
+        }
+        catch(Exception e){
+            System.err.println(e.toString());
+        }
+        finally{
+            if (resultset != null) { try { resultset.close(); resultset = null; } catch (Exception e) {} }
+            
+            if (pstSelect != null) { try { pstSelect.close(); pstSelect = null; } catch (Exception e) {} }
+        }
+        
+        return shift;
     }
     
     public Punch getPunch(int punchID){
@@ -123,8 +253,8 @@ public class TASDatabase {
         PreparedStatement pstSelect = null;
         ResultSet resultset = null;
         ResultSetMetaData metadata = null;
-        String query, tIdLabel, bIdLabel, ptIdLabel, terminalId, badgeId, 
-                punchTypeId;
+        String query, tIdLabel, bIdLabel, ptIdLabel, badgeId;
+        int terminalId, punchTypeId;
         boolean hasResults;
         
         try{
@@ -150,9 +280,9 @@ public class TASDatabase {
                     ptIdLabel = metadata.getColumnLabel(4);
                     
                     //Retrieve and store punch information
-                    terminalId = resultset.getString(tIdLabel);
+                    terminalId = resultset.getInt(tIdLabel);
                     badgeId = resultset.getString(bIdLabel);
-                    punchTypeId = resultset.getString(ptIdLabel);
+                    punchTypeId = resultset.getInt(ptIdLabel);
                     
                     //Get badge information from badge id and store in a badge object
                     Badge badge = getBadge(badgeId);
@@ -166,6 +296,11 @@ public class TASDatabase {
         }
         catch(Exception e){
             System.err.println(e.toString());
+        }
+        finally{
+            if (resultset != null) { try { resultset.close(); resultset = null; } catch (Exception e) {} }
+            
+            if (pstSelect != null) { try { pstSelect.close(); pstSelect = null; } catch (Exception e) {} }
         }
         
         
