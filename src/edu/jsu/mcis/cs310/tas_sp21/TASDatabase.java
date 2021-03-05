@@ -253,6 +253,7 @@ public class TASDatabase {
         PreparedStatement pstSelect = null;
         ResultSet resultset = null;
         ResultSetMetaData metadata = null;
+        
         String query, tIdLabel, bIdLabel, ptIdLabel, badgeId;
         int terminalId, punchTypeId;
         boolean hasResults;
