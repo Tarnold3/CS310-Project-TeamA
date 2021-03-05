@@ -11,6 +11,7 @@ import java.time.temporal.*;
  *
  * @author Tucker
  * @author Andrew
+ * @author Gage
  */
 public class Shift {
     private int id;
