@@ -10,6 +10,7 @@ import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
+import java.time.LocalTime;
 
 /**
  *
@@ -21,7 +22,7 @@ public class TASDatabase {
     public TASDatabase(){
         
         try{
-            String server = ("jdbc:mysql://localhost/p2_test");
+            String server = ("jdbc:mysql://localhost/TAS");
             String username = "CS310TeamA";
             String password = "passcs310";
             
@@ -85,13 +86,14 @@ public class TASDatabase {
                     
                     //Populate badge object with badge information
                     badge = new Badge(badgeID, badgeDesc);
+                    
                 }
                 
             }
             
         }
         catch(Exception e){
-            System.err.println(e.toString());
+            e.printStackTrace();
         }
         finally{
             if (resultset != null) { try { resultset.close(); resultset = null; } catch (Exception e) {} }
@@ -114,10 +116,9 @@ public class TASDatabase {
         String idLabel, descLabel, startLabel, stopLabel, intervalLabel, gpLabel,
                 dockLabel, lunchStartLabel, lunchStopLabel, lunchDeductLabel;
         
-        String shiftDesc, shiftStart, shiftStop, shiftInterval, shiftGP,
-                shiftDock, lunchStart, lunchStop, lunchDeduct;
+        String shiftDesc, shiftStart, shiftStop, lunchStart, lunchStop;
         
-        int shiftId;
+        int shiftId, shiftInterval, shiftGP, shiftDock, lunchDeduct;
         
         try{
             
@@ -145,7 +146,7 @@ public class TASDatabase {
                     dockLabel = metadata.getColumnLabel(6);
                     lunchStartLabel = metadata.getColumnLabel(7);
                     lunchStopLabel = metadata.getColumnLabel(8);
-                    lunchDeductLabel = metadata.getColumnLabel(9);   
+                    lunchDeductLabel = metadata.getColumnLabel(9); 
                     
                     
                     //Retrieve and store shift information
@@ -153,18 +154,40 @@ public class TASDatabase {
                     shiftDesc = resultset.getString(descLabel);
                     shiftStart = resultset.getString(startLabel);
                     shiftStop = resultset.getString(stopLabel);
-                    shiftInterval = resultset.getString(intervalLabel);
-                    shiftGP = resultset.getString(gpLabel);
-                    shiftDock = resultset.getString(dockLabel);
+                    shiftInterval = resultset.getInt(intervalLabel);
+                    shiftGP = resultset.getInt(gpLabel);
+                    shiftDock = resultset.getInt(dockLabel);
                     lunchStart = resultset.getString(lunchStartLabel);
                     lunchStop = resultset.getString(lunchStopLabel);
-                    lunchDeduct = resultset.getString(lunchDeductLabel);
+                    lunchDeduct = resultset.getInt(lunchDeductLabel);
+                    
+                    //Convert times into LocalTime objects
+                    String[] values1 = shiftStart.split(":");
+                    String[] values2 = shiftStop.split(":");
+                    String[] values3 = lunchStart.split(":");
+                    String[] values4 = lunchStop.split(":");
+                    
+                    int startHour = Integer.parseInt(values1[0]);
+                    int startMin = Integer.parseInt(values1[1]);
+                    LocalTime start = LocalTime.of(startHour, startMin);
+                    
+                    int stopHour = Integer.parseInt(values2[0]);
+                    int stopMin = Integer.parseInt(values2[1]);
+                    LocalTime stop = LocalTime.of(stopHour, stopMin);
+                    
+                    int lunchStartHour = Integer.parseInt(values3[0]);
+                    int lunchStartMin = Integer.parseInt(values3[1]);
+                    LocalTime lunchStartObj = LocalTime.of(lunchStartHour, lunchStartMin);
+                    
+                    int lunchStopHour = Integer.parseInt(values4[0]);
+                    int lunchStopMin = Integer.parseInt(values4[1]);
+                    LocalTime lunchStopObj = LocalTime.of(lunchStopHour, lunchStopMin);
                     
                     
                     //Populate shift object with shift information
-                    shift = new Shift(shiftId, shiftDesc, shiftStart, shiftStop, 
-                            shiftInterval, shiftGP, shiftDock, lunchStart, 
-                    lunchStop, lunchDeduct);
+                    shift = new Shift(shiftId, shiftDesc, start, stop, 
+                            shiftInterval, shiftGP, shiftDock, lunchStartObj, 
+                    lunchStopObj, lunchDeduct);
                     
                 }
                 
@@ -172,14 +195,14 @@ public class TASDatabase {
             
         }
         catch(Exception e){
-            System.err.println(e.toString());
+            e.printStackTrace();
         }
         finally{
             if (resultset != null) { try { resultset.close(); resultset = null; } catch (Exception e) {} }
             
             if (pstSelect != null) { try { pstSelect.close(); pstSelect = null; } catch (Exception e) {} }
         }
-        
+       
         return shift;
     }
     
@@ -221,7 +244,7 @@ public class TASDatabase {
                     metadata = resultset.getMetaData();
                     
                     //Store shiftid column label
-                    shiftIdLabel = metadata.getColumnLabel(7);
+                    shiftIdLabel = metadata.getColumnLabel(6);
                     
                     //Retrieve and store shift id
                     shiftId = resultset.getInt(shiftIdLabel);
@@ -236,7 +259,7 @@ public class TASDatabase {
             
         }
         catch(Exception e){
-            System.err.println(e.toString());
+            e.printStackTrace();
         }
         finally{
             if (resultset != null) { try { resultset.close(); resultset = null; } catch (Exception e) {} }
@@ -263,7 +286,7 @@ public class TASDatabase {
             if(conn.isValid(0)){
                 
                 //Query the database
-                query = "SELECT * FROM badge WHERE id=" + punchID;
+                query = "SELECT * FROM punch WHERE id=" + punchID;
                 pstSelect = conn.prepareStatement(query);
                 hasResults = pstSelect.execute();
                 
@@ -290,20 +313,20 @@ public class TASDatabase {
                     
                     //Populate the punch object with punch information
                     punch = new Punch(badge, terminalId, punchTypeId);
+                    
                 }
                 
             }
             
         }
         catch(Exception e){
-            System.err.println(e.toString());
+            e.printStackTrace();
         }
         finally{
             if (resultset != null) { try { resultset.close(); resultset = null; } catch (Exception e) {} }
             
             if (pstSelect != null) { try { pstSelect.close(); pstSelect = null; } catch (Exception e) {} }
         }
-        
         
         return punch;
     }
