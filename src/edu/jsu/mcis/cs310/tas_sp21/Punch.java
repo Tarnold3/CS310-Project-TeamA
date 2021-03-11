@@ -4,6 +4,7 @@
  * and open the template in the editor.
  */
 package edu.jsu.mcis.cs310.tas_sp21;
+import java.sql.Timestamp;
 
 /**
  *
@@ -14,13 +15,15 @@ public class Punch {
     private String id;
     private int terminalid;
     private String badgeid;
-    private long originaltimestamp;
+    private Timestamp originaltimestamp;
     private int punchtypeid;
     private String adjustmenttype;
 
-    public Punch(Badge badge, int terminalid, int punchtypeid) {
+    public Punch(Badge badge, int terminalid, int punchtypeid, String badgeid, Timestamp originaltimestamp) {
         this.terminalid = terminalid;
         this.punchtypeid = punchtypeid;
+        this.badgeid = badge.getId();
+        this.originaltimestamp = originaltimestamp;
     }
 
     public String getId() {
@@ -35,7 +38,7 @@ public class Punch {
         return badgeid;
     }
 
-    public long getOriginaltimestamp() {
+    public Timestamp getOriginaltimestamp() {
         return originaltimestamp;
     }
 
