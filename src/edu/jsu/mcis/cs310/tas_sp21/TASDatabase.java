@@ -10,6 +10,7 @@ import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
+import java.sql.Timestamp;
 import java.time.LocalTime;
 
 /**
@@ -17,7 +18,7 @@ import java.time.LocalTime;
  * @author Tucker
  */
 public class TASDatabase {
-    private Connection conn;
+    private Connection conn = null;
     
     public TASDatabase(){
         
@@ -67,7 +68,7 @@ public class TASDatabase {
             if(conn.isValid(0)){
                 
                 //Query the database
-                query = "SELECT * FROM badge WHERE id=" + badgeID;
+                query = "SELECT * FROM badge WHERE id='" + badgeID + "'";
                 pstSelect = conn.prepareStatement(query);
                 hasResults = pstSelect.execute();
                 
@@ -75,11 +76,13 @@ public class TASDatabase {
                     //Retrieve ResultSet Information
                     resultset = pstSelect.getResultSet();
                     
+                    
                     //Retrieve Metadata
+                    resultset.first();
                     metadata = resultset.getMetaData();
                     
                     //Store column name for badge description
-                    columnName = metadata.getColumnLabel(1);
+                    columnName = metadata.getColumnLabel(2);
                     
                     //Retrieve and store badge information
                     badgeDesc = resultset.getString(columnName);
@@ -125,7 +128,7 @@ public class TASDatabase {
             if(conn.isValid(0)){
                 
                 //Query the database
-                query = "SELECT * FROM shift WHERE id=" + shiftID;
+                query = "SELECT * FROM shift WHERE id='" + shiftID + "'";
                 pstSelect = conn.prepareStatement(query);
                 hasResults = pstSelect.execute();
                 
@@ -134,19 +137,20 @@ public class TASDatabase {
                     resultset = pstSelect.getResultSet();
                     
                     //Retrieve Metadata
+                    resultset.first();
                     metadata = resultset.getMetaData();
                     
                     //Store column labels
-                    idLabel = metadata.getColumnLabel(0);
-                    descLabel = metadata.getColumnLabel(1);
-                    startLabel = metadata.getColumnLabel(2);
-                    stopLabel = metadata.getColumnLabel(3);
-                    intervalLabel = metadata.getColumnLabel(4);
-                    gpLabel = metadata.getColumnLabel(5);
-                    dockLabel = metadata.getColumnLabel(6);
-                    lunchStartLabel = metadata.getColumnLabel(7);
-                    lunchStopLabel = metadata.getColumnLabel(8);
-                    lunchDeductLabel = metadata.getColumnLabel(9); 
+                    idLabel = metadata.getColumnLabel(1);
+                    descLabel = metadata.getColumnLabel(2);
+                    startLabel = metadata.getColumnLabel(3);
+                    stopLabel = metadata.getColumnLabel(4);
+                    intervalLabel = metadata.getColumnLabel(5);
+                    gpLabel = metadata.getColumnLabel(6);
+                    dockLabel = metadata.getColumnLabel(7);
+                    lunchStartLabel = metadata.getColumnLabel(8);
+                    lunchStopLabel = metadata.getColumnLabel(9);
+                    lunchDeductLabel = metadata.getColumnLabel(10); 
                     
                     
                     //Retrieve and store shift information
@@ -231,7 +235,7 @@ public class TASDatabase {
             if(conn.isValid(0)){
                 
                 //Query the database for employee table
-                query = "SELECT * FROM employee WHERE badgeid=" + badgeId;
+                query = "SELECT * FROM employee WHERE badgeid='" + badgeId + "'";
                 pstSelect = conn.prepareStatement(query);
                 hasResults = pstSelect.execute();
                 
@@ -241,10 +245,11 @@ public class TASDatabase {
                     resultset = pstSelect.getResultSet();
                     
                     //Retrieve Metadata
+                    resultset.first();
                     metadata = resultset.getMetaData();
                     
                     //Store shiftid column label
-                    shiftIdLabel = metadata.getColumnLabel(6);
+                    shiftIdLabel = metadata.getColumnLabel(7);
                     
                     //Retrieve and store shift id
                     shiftId = resultset.getInt(shiftIdLabel);
@@ -277,8 +282,9 @@ public class TASDatabase {
         ResultSet resultset = null;
         ResultSetMetaData metadata = null;
         
-        String query, tIdLabel, bIdLabel, ptIdLabel, badgeId;
+        String query, tIdLabel, bIdLabel, timeLabel, ptIdLabel, badgeId;
         int terminalId, punchTypeId;
+        Timestamp timeStamp;
         boolean hasResults;
         
         try{
@@ -286,7 +292,7 @@ public class TASDatabase {
             if(conn.isValid(0)){
                 
                 //Query the database
-                query = "SELECT * FROM punch WHERE id=" + punchID;
+                query = "SELECT * FROM punch WHERE id='" + punchID + "'";
                 pstSelect = conn.prepareStatement(query);
                 hasResults = pstSelect.execute();
                 
@@ -296,17 +302,22 @@ public class TASDatabase {
                     resultset = pstSelect.getResultSet();
                     
                     //Retrieve Metadata
+                    resultset.first();
                     metadata = resultset.getMetaData();
                     
                     //Store column labels
-                    tIdLabel = metadata.getColumnLabel(1);
-                    bIdLabel = metadata.getColumnLabel(2);
-                    ptIdLabel = metadata.getColumnLabel(4);
+                    tIdLabel = metadata.getColumnLabel(2);
+                    bIdLabel = metadata.getColumnLabel(3);
+                    timeLabel = metadata.getColumnLabel(4);
+                    ptIdLabel = metadata.getColumnLabel(5);
+                    
                     
                     //Retrieve and store punch information
                     terminalId = resultset.getInt(tIdLabel);
                     badgeId = resultset.getString(bIdLabel);
+                    timeStamp = resultset.getTimestamp(timeLabel);
                     punchTypeId = resultset.getInt(ptIdLabel);
+                    
                     
                     //Get badge information from badge id and store in a badge object
                     Badge badge = getBadge(badgeId);
