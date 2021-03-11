@@ -7,7 +7,7 @@ package edu.jsu.mcis.cs310.tas_sp21;
 
 /**
  *
- * @author Gage
+ * @author Gage 
  */
 public class Badge {
     
