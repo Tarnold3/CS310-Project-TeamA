@@ -91,7 +91,7 @@ public class Shift {
         
         StringBuilder strb = new StringBuilder();
         strb.append(description).append(": ").append(start).append(" - ").append(stop);
-        strb.append(" (").append(start.until(stop, ChronoUnit.MINUTES)).append("minutes ); ").append("Lunch: ");
+        strb.append(" (").append(start.until(stop, ChronoUnit.MINUTES)).append(" minutes); ").append("Lunch: ");
         strb.append(lunchstart).append(" - ").append(lunchstop);
         strb.append(" (").append(lunchstart.until(lunchstop, ChronoUnit.MINUTES)).append(" minutes)");
         return strb.toString();
