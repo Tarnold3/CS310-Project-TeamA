@@ -15,7 +15,7 @@ import java.time.LocalTime;
 
 /**
  *
- * @author Tucker
+ * @author Jayden
  */
 public class TASDatabase {
     private Connection conn;
@@ -338,9 +338,4 @@ public class TASDatabase {
         
         return punch;
     }
-    
-<<<<<<< HEAD
 }
-=======
-}
->>>>>>> f5a8b3316d0fd3ac27474fd7181ddb1438855be4
