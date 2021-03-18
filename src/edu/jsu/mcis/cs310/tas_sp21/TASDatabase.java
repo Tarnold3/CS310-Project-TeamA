@@ -12,6 +12,8 @@ import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.Timestamp;
 import java.time.LocalTime;
+import java.util.ArrayList;
+import java.util.GregorianCalendar;
 
 /**
  *
@@ -320,7 +322,7 @@ public class TASDatabase {
                     Badge badge = getBadge(badgeId);
                     
                     //Populate the punch object with punch information
-                    punch = new Punch(badge, terminalId, punchTypeId, badgeId, timeStamp);
+                    punch = new Punch(badge, terminalId, punchTypeId, badgeId, timeStamp); 
                     
                 }
                 
@@ -337,5 +339,158 @@ public class TASDatabase {
         }
         
         return punch;
+    }
+
+
+
+/*
+        Feature 2
+*/
+
+    public ArrayList<Punch> getDailyPunchList(Badge badge, long ts){
+
+                        
+        
+        Punch punch = null;
+        ArrayList<Punch> punches = new ArrayList();
+        
+        PreparedStatement pstSelect = null;
+        ResultSet resultset = null;
+        ResultSetMetaData metadata = null;
+        
+        String query, tIdLabel, bIdLabel, timeLabel, ptIdLabel, badgeId;
+        int terminalId, punchTypeId;
+        Timestamp timeStamp;
+        boolean hasResults;
+        
+        String badgeid = badge.getId(); // I added
+        
+        String timestmp = Long.toString(ts);
+        int stop = timestmp.indexOf(" ");
+        String tsdate = timestmp.substring(0, stop);
+        String tstime = timestmp.substring((stop + 1));
+        
+        String date[] = tsdate.split("-");
+        int year = Integer.parseInt(date[0]);
+        int month = Integer.parseInt(date[1]);
+        int day = Integer.parseInt(date[2]);
+        
+        String time[] = tstime.split(":");
+        int hour = Integer.parseInt(time[0]);
+        int minute = Integer.parseInt(time[1]);
+        int second = Integer.parseInt(time[2]);
+        
+        GregorianCalendar specificday = new GregorianCalendar(year, month, day);
+        
+        
+        
+        try{
+            
+            if(conn.isValid(0)){
+                
+                //Query the database
+                query = "SELECT * FROM punch WHERE badgeid='" + badgeid + "' AND originaltimestamp='" + specificday + "%'";
+                pstSelect = conn.prepareStatement(query);
+                hasResults = pstSelect.execute();
+                
+                /*                                               *
+                 *   retrieves punches from the specified day    *        
+                 *                                               */
+                if(hasResults){
+                    
+                    
+                    
+                    //Retrieve ResultSet Information
+                    resultset = pstSelect.getResultSet();
+                    
+                    //Retrieve Metadata
+                    resultset.first();
+                    metadata = resultset.getMetaData();
+                    
+                    //Store column labels
+                    tIdLabel = metadata.getColumnLabel(2);
+                    bIdLabel = metadata.getColumnLabel(3);
+                    timeLabel = metadata.getColumnLabel(4);
+                    ptIdLabel = metadata.getColumnLabel(5);
+                    
+                    //Retrieve and store punch information
+                    terminalId = resultset.getInt(tIdLabel);
+                    badgeId = resultset.getString(bIdLabel);
+                    timeStamp = resultset.getTimestamp(timeLabel);
+                    punchTypeId = resultset.getInt(ptIdLabel);
+                    
+                    //Get badge information from badge id and store in a badge object
+                    badge = getBadge(badgeId);
+                    
+                    //Populate the punch object with punch information
+                    punch = new Punch(badge, terminalId, punchTypeId, badgeId, timeStamp);
+                    punches.add(punch);
+                }
+                
+                
+                specificday.add(day, 1); //increments the day by one where this value represents the next day
+                int count = 0;
+                
+                //Query the database
+                query = "SELECT * FROM punch WHERE badgeid='" + badgeid + "' AND originaltimestamp='" + specificday + "%'";
+                pstSelect = conn.prepareStatement(query);
+                hasResults = pstSelect.execute();               
+                
+                /*                                                                             *
+                 *   gets the first punch from the next day if it is a clock out or time out   *
+                 *                                                                             */
+                
+                
+                if(hasResults && (count == 0)) //changed where it only retrieves the first clockout if there are multiple
+                {
+                    //Retrieve ResultSet Information
+                    resultset = pstSelect.getResultSet();
+                    
+                    //Retrieve Metadata
+                    resultset.first();
+                    metadata = resultset.getMetaData();
+                    
+                    //Store column labels
+                    tIdLabel = metadata.getColumnLabel(2);
+                    bIdLabel = metadata.getColumnLabel(3);
+                    timeLabel = metadata.getColumnLabel(4);
+                    ptIdLabel = metadata.getColumnLabel(5);
+                    
+                    //Retrieve and store punch information
+                    terminalId = resultset.getInt(tIdLabel);
+                    badgeId = resultset.getString(bIdLabel);
+                    timeStamp = resultset.getTimestamp(timeLabel);
+                    punchTypeId = resultset.getInt(ptIdLabel);
+                    
+                    //Get badge information from badge id and store in a badge object
+                    badge = getBadge(badgeId);
+                    
+                    //Populate the punch object with punch information
+                    punch = new Punch(badge, terminalId, punchTypeId, badgeId, timeStamp);
+                    
+                    
+                    int type = Integer.parseInt(metadata.getColumnLabel(5));
+                    
+                    if(type != 1)   //change to only get first punch
+                    {
+                        punches.add(punch);
+                        count++;
+                    }
+                    
+                }
+                
+            }
+            
+        }
+        catch(Exception e){
+            e.printStackTrace();
+        }
+        finally{
+            if (resultset != null) { try { resultset.close(); resultset = null; } catch (Exception e) {} }
+            
+            if (pstSelect != null) { try { pstSelect.close(); pstSelect = null; } catch (Exception e) {} }
+        }
+        
+        return punches;
     }
 }
