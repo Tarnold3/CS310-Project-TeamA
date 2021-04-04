@@ -14,6 +14,7 @@ import java.sql.Timestamp;
 import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.GregorianCalendar;
+import java.text.SimpleDateFormat;
 
 /**
  *
@@ -25,7 +26,7 @@ public class TASDatabase {
     public TASDatabase(){
         
         try{
-            String server = ("jdbc:mysql://localhost/TAS?autoReconnect=true&useSSL=false");
+            String server = ("jdbc:mysql://localhost/TAS");
             String username = "CS310TeamA";
             String password = "passcs310";
             
@@ -42,13 +43,9 @@ public class TASDatabase {
     public void close(Connection c){
         
         try{
-            
             if(c != null){
-                
-                c.close(); //close connection
-                
+                c.close();
             }
-            
         }
         catch(Exception e){
             System.err.println(e.toString());
@@ -322,7 +319,28 @@ public class TASDatabase {
                     Badge badge = getBadge(badgeId);
                     
                     //Populate the punch object with punch information
-                    punch = new Punch(badge, terminalId, punchTypeId, badgeId, timeStamp); 
+                    punch = new Punch(badge, terminalId, punchTypeId);
+                    
+                    String query2 = "SELECT UNIX_TIMESTAMP('" + timeStamp.toString() +
+                            "') FROM punch WHERE id='" + punchID + "'";
+                    pstSelect = conn.prepareStatement(query2);
+                    hasResults = pstSelect.execute();
+                    
+                    if(hasResults){
+                        
+                        resultset = pstSelect.getResultSet();
+                        
+                        resultset.first();
+                        metadata = resultset.getMetaData();
+                        
+                        String tsLabel = metadata.getColumnLabel(1);
+                        long timeInSeconds = resultset.getLong(tsLabel);
+                        long timeInMillis = timeInSeconds * 1000;
+                        
+                        punch.setOriginalTimeStamp(timeInMillis);
+                        
+                    }
+                    
                     
                 }
                 
@@ -340,13 +358,59 @@ public class TASDatabase {
         
         return punch;
     }
-
-
-
-/*
-        Feature 2
-*/
-
+    
+    public int insertPunch(Punch p){
+        int punchID = 0; //will hold new punch's id
+        
+        //Extract punch information
+        Timestamp t = new Timestamp(p.getOriginaltimestamp());
+        
+        int terminalId = p.getTerminalid();
+        String badgeId = p.getBadgeid();
+        String timestamp = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(t.getTime());
+        int punchtypeId = p.getPunchtypeid();
+        
+        PreparedStatement pstUpdate = null;
+        int key = 0, result = 0;
+        ResultSet keys;
+        
+        try{
+            
+            if(conn.isValid(0)){
+                
+                //Query the database
+                String query = "INSERT INTO punch(terminalid, badgeid, originaltimestamp, "
+                + "punchtypeid) VALUES(?, ?, ?, ?)";
+            
+                pstUpdate = conn.prepareStatement(query, PreparedStatement.RETURN_GENERATED_KEYS);
+                
+                //Place new record information into database
+                pstUpdate.setInt(1, terminalId);
+                pstUpdate.setString(2, badgeId);
+                pstUpdate.setString(3, timestamp);
+                pstUpdate.setInt(4, punchtypeId);
+                
+                result = pstUpdate.executeUpdate();
+                
+                if(result == 1){
+                    keys = pstUpdate.getGeneratedKeys();
+                    if(keys.next()){
+                        key = keys.getInt(1);
+                        punchID = key;
+                    }
+                }
+                
+                
+            }
+            
+        }
+        catch(Exception e){
+            System.err.println(e.toString());
+        }
+        
+        return punchID; 
+    }
+    
     public ArrayList<Punch> getDailyPunchList(Badge badge, long ts){
 
                         
@@ -423,7 +487,7 @@ public class TASDatabase {
                     badge = getBadge(badgeId);
                     
                     //Populate the punch object with punch information
-                    punch = new Punch(badge, terminalId, punchTypeId, badgeId, timeStamp);
+                    punch = new Punch(badge, terminalId, punchTypeId);
                     punches.add(punch);
                 }
                 
@@ -466,7 +530,7 @@ public class TASDatabase {
                     badge = getBadge(badgeId);
                     
                     //Populate the punch object with punch information
-                    punch = new Punch(badge, terminalId, punchTypeId, badgeId, timeStamp);
+                    punch = new Punch(badge, terminalId, punchTypeId);
                     
                     
                     int type = Integer.parseInt(metadata.getColumnLabel(5));
@@ -493,4 +557,5 @@ public class TASDatabase {
         
         return punches;
     }
+    
 }

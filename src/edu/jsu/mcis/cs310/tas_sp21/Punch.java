@@ -6,52 +6,59 @@
 package edu.jsu.mcis.cs310.tas_sp21;
 import java.sql.Timestamp;
 import java.time.LocalTime;
+import java.util.GregorianCalendar;
 
 /**
  *
  * @author Gage
  */
 public class Punch {
-    //"#D2C39273 CLOCKED IN: WED 09/05/2018 07:00:07"
+    
     private String id;
     private int terminalid;
     private String badgeid;
-    private Timestamp originaltimestamp;
+    private long originaltimestamp;
     private int punchtypeid;
     private String adjustmenttype;
-
-    public Punch(Badge badge, int terminalid, int punchtypeid, String badgeid, Timestamp originaltimestamp) {
+    
+    Punch(Badge badge, int terminalid, int punchtypeid){
+        this.badgeid = badge.getId();
         this.terminalid = terminalid;
         this.punchtypeid = punchtypeid;
-        this.badgeid = badge.getId();
-        this.originaltimestamp = originaltimestamp;
+        
+        GregorianCalendar gc = new GregorianCalendar();
+        
+        originaltimestamp = gc.getTimeInMillis(); //initializes timestamp to current system time
     }
-
-    public String getId() {
+    
+    public void setOriginalTimeStamp(long t){
+        originaltimestamp = t;
+    }
+    
+    public String getId(){
         return id;
     }
-
-    public int getTerminalid() {
+    
+    public int getTerminalid(){
         return terminalid;
     }
-
-    public String getBadgeid() {
+    
+    public String getBadgeid(){
         return badgeid;
     }
-
-    public Timestamp getOriginaltimestamp() {
+    
+    public long getOriginaltimestamp(){
         return originaltimestamp;
     }
-
-    public int getPunchtypeid() {
+    
+    public int getPunchtypeid(){
         return punchtypeid;
     }
     
     public String formatDay(Timestamp t){
         String day = "";
-        int dayNum;
+        int dayNum = t.getDay();
         
-        dayNum = t.getDay();
         switch(dayNum){
             case 0:
                 day = "SUN";
@@ -112,32 +119,29 @@ public class Punch {
         
         StringBuilder s = new StringBuilder();
         
-        String day = formatDay(originaltimestamp);
-        String date = formatDate(originaltimestamp);
-        String time = formatTime(originaltimestamp);
+        Timestamp ts = new Timestamp(originaltimestamp);
+        
+        String day = formatDay(ts);
+        String date = formatDate(ts);
+        String time = formatTime(ts);
         String timeStamp = day + " " + date + " " + time;
         
-        if (punchtypeid == 0){
+        if(punchtypeid == 0){
             s.append("#").append(badgeid).append(" ");
             s.append("CLOCKED OUT: ");
-            s.append(timeStamp);                              
+            s.append(timeStamp);
         }
-
-        else if (punchtypeid == 1){
+        else if(punchtypeid == 1){
             s.append("#").append(badgeid).append(" ");
             s.append("CLOCKED IN: ");
-            s.append(timeStamp);     
+            s.append(timeStamp);
         }
-
-        else {
+        else{
             s.append("#").append(badgeid).append(" ");
             s.append("TIMED OUT: ");
-            s.append(timeStamp);     
+            s.append(timeStamp);
         }
-
+        
         return s.toString();
     }
-    
-    
-    
 }
