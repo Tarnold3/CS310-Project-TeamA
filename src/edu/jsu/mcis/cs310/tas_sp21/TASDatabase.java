@@ -27,7 +27,7 @@ public class TASDatabase {
     public TASDatabase(){
         
         try{
-            String server = ("jdbc:mysql://localhost/TAS");
+            String server = ("jdbc:mysql://localhost/TAS?autoReconnect=true&useSSL=false");
             String username = "CS310TeamA";
             String password = "passcs310";
             
