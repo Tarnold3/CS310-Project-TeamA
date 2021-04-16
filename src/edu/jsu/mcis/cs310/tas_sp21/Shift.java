@@ -24,7 +24,7 @@ public class Shift {
     private LocalTime lunchstart = null;
     private LocalTime lunchstop = null;
     private int lunchdeduct = 0;
-    private int lunchduration = 0;
+    private long lunchduration = 0;
     
     public Shift(int id, String description, LocalTime start, LocalTime stop, 
             int interval, int graceperiod, int dock, LocalTime lunchstart, 
@@ -40,7 +40,7 @@ public class Shift {
         this.lunchstart = lunchstart;
         this.lunchstop = lunchstop;
         this.lunchdeduct = lunchdeduct;
-        lunchduration = 0;
+        lunchduration = lunchstart.until(lunchstop, ChronoUnit.MINUTES);
         
     }
     
@@ -84,7 +84,7 @@ public class Shift {
         return lunchdeduct;
     }
     
-    public int getLunchDuration(){
+    public long getLunchDuration(){
         return lunchduration;
     }
     
