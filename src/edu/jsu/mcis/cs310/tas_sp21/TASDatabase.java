@@ -280,8 +280,7 @@ public class TASDatabase {
         PreparedStatement pstSelect = null;
         ResultSet resultset = null;
         ResultSetMetaData metadata = null;
-        
-        String query, tIdLabel, bIdLabel, timeLabel, ptIdLabel, badgeId;
+        String query, tIdLabel, bIdLabel, timeLabel, ptIdLabel, badgeId, Id;
         int terminalId, punchTypeId;
         Timestamp timeStamp;
         boolean hasResults;
@@ -305,11 +304,12 @@ public class TASDatabase {
                     metadata = resultset.getMetaData();
                     
                     //Store column labels
+                    Id = metadata.getColumnLabel(1);
                     tIdLabel = metadata.getColumnLabel(2);
                     bIdLabel = metadata.getColumnLabel(3);
                     timeLabel = metadata.getColumnLabel(4);
                     ptIdLabel = metadata.getColumnLabel(5);
-                    
+
                     //Retrieve and store punch information
                     terminalId = resultset.getInt(tIdLabel);
                     badgeId = resultset.getString(bIdLabel);
@@ -321,7 +321,8 @@ public class TASDatabase {
                     
                     //Populate the punch object with punch information
                     punch = new Punch(badge, terminalId, punchTypeId);
-                    
+                    punch.setId(punchID);
+
                     String query2 = "SELECT UNIX_TIMESTAMP('" + timeStamp.toString() +
                             "') FROM punch WHERE id='" + punchID + "'";
                     pstSelect = conn.prepareStatement(query2);
@@ -393,11 +394,12 @@ public class TASDatabase {
                 
                 result = pstUpdate.executeUpdate();
                 
-                if(result == 1){
+                if(result == 1){                        
                     keys = pstUpdate.getGeneratedKeys();
                     if(keys.next()){
                         key = keys.getInt(1);
                         punchID = key;
+                        p.setId(punchID);
                     }
                 }
                 
@@ -423,8 +425,8 @@ public class TASDatabase {
         ResultSet resultset = null;
         ResultSetMetaData metadata = null;
         
-        String query, tIdLabel, bIdLabel, timeLabel, ptIdLabel, badgeId;
-        int terminalId, punchTypeId;
+        String query, tIdLabel, bIdLabel, timeLabel, ptIdLabel, badgeId, theID;
+        int terminalId, punchTypeId, Id;
         Timestamp timeStamp;
         boolean hasResults;
         
@@ -468,12 +470,14 @@ public class TASDatabase {
                     metadata = resultset.getMetaData();
                     
                     //Store column labels
+                    theID = metadata.getColumnLabel(1);
                     tIdLabel = metadata.getColumnLabel(2);
                     bIdLabel = metadata.getColumnLabel(3);
                     timeLabel = metadata.getColumnLabel(4);
                     ptIdLabel = metadata.getColumnLabel(5);
                     
                     //Retrieve and store punch information
+                    Id = resultset.getInt(theID);
                     terminalId = resultset.getInt(tIdLabel);
                     badgeId = resultset.getString(bIdLabel);
                     timeStamp = resultset.getTimestamp(timeLabel);
@@ -484,11 +488,13 @@ public class TASDatabase {
                     
                     //Populate the punch object with punch information
                     punch = new Punch(badge, terminalId, punchTypeId);
+                    punch.setId(Id);
                     punch.setOriginalTimeStamp(timeStamp.getTime());
                     punches.add(punch);
                     
                     while(resultset.next()){
                         //Retrieve and store punch information
+                        Id = resultset.getInt(theID);                        
                         terminalId = resultset.getInt(tIdLabel);
                         badgeId = resultset.getString(bIdLabel);
                         timeStamp = resultset.getTimestamp(timeLabel);
@@ -499,6 +505,7 @@ public class TASDatabase {
 
                         //Populate the punch object with punch information
                         punch = new Punch(badge, terminalId, punchTypeId);
+                        punch.setId(Id);                        
                         punch.setOriginalTimeStamp(timeStamp.getTime());
                         punches.add(punch);
                     }
@@ -522,12 +529,14 @@ public class TASDatabase {
                         metadata = resultset.getMetaData();
 
                         //Store column labels
+                        theID = metadata.getColumnLabel(1);
                         tIdLabel = metadata.getColumnLabel(2);
                         bIdLabel = metadata.getColumnLabel(3);
                         timeLabel = metadata.getColumnLabel(4);
                         ptIdLabel = metadata.getColumnLabel(5);
 
                         //Retrieve and store punch information
+                        Id = resultset.getInt(theID);                         
                         terminalId = resultset.getInt(tIdLabel);
                         badgeId = resultset.getString(bIdLabel);
                         timeStamp = resultset.getTimestamp(timeLabel);
@@ -538,6 +547,7 @@ public class TASDatabase {
 
                         //Populate the punch object with punch information
                         punch = new Punch(badge, terminalId, punchTypeId);
+                        punch.setId(Id);                        
                         punch.setOriginalTimeStamp(timeStamp.getTime());
                         punches.add(punch);
                     }

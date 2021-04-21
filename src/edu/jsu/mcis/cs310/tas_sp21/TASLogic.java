@@ -9,6 +9,8 @@ import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.GregorianCalendar;
+import java.util.HashMap;
+import org.json.simple.*;
 /**
  *
  * @author Andrew
@@ -58,9 +60,7 @@ public class TASLogic {
             int indtype = indpunch.getPunchtypeid();
             
             if((lpun >= lstartmilli) && (lpun <= (lstartmilli + 60000)))
-            {
-                Punch lstartpunch = indpunch;
-                
+            {                
                 if(indtype == 0)
                 {
                     lunchstrt = 1;
@@ -114,4 +114,42 @@ public class TASLogic {
         
         return totalmin;
     }
+    
+    
+    public static String getPunchListAsJSON(ArrayList<Punch>dailyPunchList){
+        
+        int i = 0;
+        
+        
+        /* Create ArrayList Object */
+        ArrayList<HashMap<String, String>> jsonData = new ArrayList();
+        
+        
+        while(i < dailyPunchList.size()){
+                    
+        Punch punch = dailyPunchList.get(i);
+        /* Create HashMap Object (one for every Punch!) */
+        HashMap<String, String> punchData = new HashMap<>();
+        
+        /* Add Punch Data to HashMap */
+        punchData.put("id", String.valueOf(punch.getId()));
+        punchData.put("badgeid", String.valueOf(punch.getBadgeid()));
+        punchData.put("terminalid", String.valueOf(punch.getTerminalid()));
+        punchData.put("punchtypeid", String.valueOf(punch.getPunchtypeid()));
+        punchData.put("punchdata", String.valueOf(punch.getAdjustmenttype()));
+        punchData.put("originaltimestamp", String.valueOf(punch.getOriginaltimestamp()));
+        punchData.put("adjustedtimestamp", String.valueOf(punch.getAdjustedtimestamp()));
+        /* ... continue in the same way with the remaining Punch data ...*/
+        
+        
+        /* Append HashMap to ArrayList */
+        jsonData.add(punchData);
+        
+        i++;
+        }
+        
+        String json = JSONValue.toJSONString(jsonData);
+        return json;
+    }        
+    
 }
