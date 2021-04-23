@@ -569,4 +569,292 @@ public class TASDatabase {
         return punches;
     }
     
+    public ArrayList<Punch> getPayPeriodPunchList(Badge badge, long ts){
+        Punch punch = null;
+        ArrayList<Punch> punches = new ArrayList();
+        
+        PreparedStatement pstSelect = null;
+        ResultSet resultset = null;
+        ResultSetMetaData metadata = null;
+        
+        String query, tIdLabel, bIdLabel, timeLabel, ptIdLabel, badgeId, theID;
+        int terminalId, punchTypeId, Id;
+        Timestamp timeStamp;
+        boolean hasResults;
+        
+        String badgeid = badge.getId();
+        
+        GregorianCalendar beginTimestamp = new GregorianCalendar();
+        beginTimestamp.setTimeInMillis(ts);
+        
+        //Set day of begin timestamp to Sunday at midnight
+        beginTimestamp.set(Calendar.DAY_OF_WEEK, 1); 
+        beginTimestamp.set(Calendar.HOUR_OF_DAY, 0);
+        beginTimestamp.set(Calendar.MINUTE, 0);
+        beginTimestamp.set(Calendar.SECOND, 0);
+        beginTimestamp.set(Calendar.MILLISECOND, 0);
+        
+        //Set day of end timestamp to Saturday right before midnight
+        GregorianCalendar endTimestamp = new GregorianCalendar();
+        endTimestamp.setTimeInMillis(ts);
+        endTimestamp.set(Calendar.DAY_OF_WEEK, 0);
+        endTimestamp.set(Calendar.HOUR_OF_DAY, 23);
+        endTimestamp.set(Calendar.MINUTE, 59);
+        endTimestamp.set(Calendar.SECOND, 59);
+        endTimestamp.set(Calendar.MILLISECOND, 99);    
+        
+        
+        try{
+            
+            if(conn.isValid(0)){
+                
+                query = "SELECT *, UNIX_TIMESTAMP(originaltimestamp) AS "
+                        + "unixtimestamp FROM punch WHERE (UNIX_TIMESTAMP(originaltimestamp) "
+                        + ">= " + (beginTimestamp.getTimeInMillis() / (long)1000) + 
+                        ") AND (UNIX_TIMESTAMP(originaltimestamp) <= " +
+                        (endTimestamp.getTimeInMillis() / (long)1000) + ") AND "
+                        + "badgeid='" + badgeid + "' ORDER BY originaltimestamp";
+                pstSelect = conn.prepareStatement(query);
+                hasResults = pstSelect.execute();
+                
+                if(hasResults){
+                    
+                    //Retrieve ResultSet Information
+                    resultset = pstSelect.getResultSet();
+                    
+                    //Retrieve Metadata
+                    resultset.first();
+                    metadata = resultset.getMetaData();
+                    
+                    //Store column labels
+                    theID = metadata.getColumnLabel(1);
+                    tIdLabel = metadata.getColumnLabel(2);
+                    bIdLabel = metadata.getColumnLabel(3);
+                    timeLabel = metadata.getColumnLabel(4);
+                    ptIdLabel = metadata.getColumnLabel(5);
+                    
+                    //Retrieve and store punch information
+                    Id = resultset.getInt(theID);
+                    terminalId = resultset.getInt(tIdLabel);
+                    badgeId = resultset.getString(bIdLabel);
+                    timeStamp = resultset.getTimestamp(timeLabel);
+                    punchTypeId = resultset.getInt(ptIdLabel);
+                    
+                    //Get badge information from badge id and store in a badge object
+                    badge = getBadge(badgeId);
+                    
+                    //Populate the punch object with punch information
+                    punch = new Punch(badge, terminalId, punchTypeId);
+                    punch.setId(Id);
+                    punch.setOriginalTimeStamp(timeStamp.getTime());
+                    punches.add(punch);
+                    
+                    while(resultset.next()){
+                        //Retrieve and store punch information
+                        Id = resultset.getInt(theID);                        
+                        terminalId = resultset.getInt(tIdLabel);
+                        badgeId = resultset.getString(bIdLabel);
+                        timeStamp = resultset.getTimestamp(timeLabel);
+                        punchTypeId = resultset.getInt(ptIdLabel);
+
+                        //Get badge information from badge id and store in a badge object
+                        badge = getBadge(badgeId);
+
+                        //Populate the punch object with punch information
+                        punch = new Punch(badge, terminalId, punchTypeId);
+                        punch.setId(Id);                        
+                        punch.setOriginalTimeStamp(timeStamp.getTime());
+                        punches.add(punch);
+                    }
+                }
+                
+                if(punches.get(punches.size()-1).getPunchtypeid() == 1){
+                        
+                    beginTimestamp.setTimeInMillis(ts + 86400000);
+                    endTimestamp.setTimeInMillis(ts + 86400000);
+                        
+                    pstSelect = conn.prepareStatement(query);
+                    hasResults = pstSelect.execute(); 
+                    
+                    if(hasResults){
+                        //Retrieve ResultSet Information
+                        resultset = pstSelect.getResultSet();
+
+
+                        //Retrieve Metadata
+                        resultset.first(); //place cursor on the first record
+                        metadata = resultset.getMetaData();
+
+                        //Store column labels
+                        theID = metadata.getColumnLabel(1);
+                        tIdLabel = metadata.getColumnLabel(2);
+                        bIdLabel = metadata.getColumnLabel(3);
+                        timeLabel = metadata.getColumnLabel(4);
+                        ptIdLabel = metadata.getColumnLabel(5);
+
+                        //Retrieve and store punch information
+                        Id = resultset.getInt(theID);                         
+                        terminalId = resultset.getInt(tIdLabel);
+                        badgeId = resultset.getString(bIdLabel);
+                        timeStamp = resultset.getTimestamp(timeLabel);
+                        punchTypeId = resultset.getInt(ptIdLabel);
+
+                        //Get badge information from badge id and store in a badge object
+                        badge = getBadge(badgeId);
+
+                        //Populate the punch object with punch information
+                        punch = new Punch(badge, terminalId, punchTypeId);
+                        punch.setId(Id);                        
+                        punch.setOriginalTimeStamp(timeStamp.getTime());
+                        punches.add(punch);
+                    }
+                        
+                }
+                
+            }
+            
+        }
+        catch(Exception e){
+            e.printStackTrace();
+        }
+        finally{
+            if (resultset != null) { try { resultset.close(); resultset = null; } catch (Exception e) {} }
+            
+            if (pstSelect != null) { try { pstSelect.close(); pstSelect = null; } catch (Exception e) {} }
+        }
+        
+        return punches;
+    }
+    
+    public Absenteeism getAbsenteeism(String badgeId, long payPeriod){
+        Absenteeism abRecord = null;
+        
+        PreparedStatement pstSelect = null;
+        ResultSet resultset = null;
+        ResultSetMetaData metadata = null;
+        
+        String query;
+        boolean hasResults;
+        
+        String badgeIdLabel, payPeriodLabel, percentageLabel;
+        String badgeIdValue;
+        Timestamp payPeriodValue;
+        double percentageValue;
+        
+        try{
+            
+            if(conn.isValid(0)){
+                
+                query = "SELECT * FROM absenteeism WHERE badgeid = '" + badgeId +
+                        "' AND UNIX_TIMESTAMP(payperiod) = '" + payPeriod + "'";
+                pstSelect = conn.prepareStatement(query);
+                hasResults = pstSelect.execute();
+                
+                if(hasResults){
+                    
+                    //Retrieve ResultSet Information
+                    resultset = pstSelect.getResultSet();
+                    
+                    //Retrieve Metadata
+                    resultset.first(); //place cursor on the first record
+                    metadata = resultset.getMetaData();
+                    
+                    //Store Column Labels
+                    badgeIdLabel = metadata.getColumnLabel(1);
+                    payPeriodLabel = metadata.getColumnLabel(2);
+                    percentageLabel = metadata.getColumnLabel(3);
+                    
+                    //Retrieve and store absenteeism information
+                    badgeIdValue = resultset.getString(badgeIdLabel);
+                    payPeriodValue = resultset.getTimestamp(payPeriodLabel);
+                    percentageValue = resultset.getDouble(percentageLabel);
+                    
+                    long timestampLong = payPeriodValue.getTime();
+                    
+                    //Populate absenteeism object
+                    abRecord = new Absenteeism(badgeIdValue, timestampLong, percentageValue);
+                    
+                }
+                
+            }
+            
+        }
+        catch(Exception e){
+            System.err.println(e.toString());
+        }
+        finally{
+            if (resultset != null) { try { resultset.close(); resultset = null; } catch (Exception e) {} }
+            
+            if (pstSelect != null) { try { pstSelect.close(); pstSelect = null; } catch (Exception e) {} }
+        }
+        
+        return abRecord;
+    }
+    
+    public void insertAbsenteeism(Absenteeism a){
+        
+        String badgeId = a.getBadgeId();
+        long payPeriod = a.getPayPeriod();
+        double percentage = a.getPercentage();
+        
+        PreparedStatement pstSelect = null, pstUpdate = null;
+        ResultSet resultset = null;
+        ResultSetMetaData metadata = null;
+        
+        String query;
+        boolean hasResults;
+        
+        try{
+            
+            if(conn.isValid(0)){
+                
+                //Use Select query to indicate whether or not a record exists
+                query = "SELECT * FROM absenteeism WHERE badgeid = '" + badgeId +
+                        "' AND UNIX_TIMESTAMP(payperiod) = '" + payPeriod + "'";
+                pstSelect = conn.prepareStatement(query);
+                hasResults = pstSelect.execute();
+                
+                if(hasResults){
+                    
+                    //If the record exists, update its percentage
+                    query = "UPDATE absenteeism SET percentage = ? WHERE" + 
+                            " badgeid = ? AND payperiod = UNIX_TIMESTAMP(?)";
+                    pstUpdate = conn.prepareStatement(query);
+                    
+                    pstUpdate.setDouble(1, percentage);
+                    pstUpdate.setString(2, badgeId);
+                    pstUpdate.setLong(3, payPeriod);
+                    
+                    conn.commit();
+                    
+                }
+                else{
+                    
+                    //If the record does not exist, insert it into the db table
+                    query = "INSERT INTO absenteeism (badgeid, payperiod, percentage) " +
+                            "VALUES (?, ?, ?, ?)";
+                    pstUpdate = conn.prepareStatement(query);
+                    
+                    pstUpdate.setString(1, badgeId);
+                    pstUpdate.setLong(2, payPeriod);
+                    pstUpdate.setDouble(3, percentage);
+                    
+                }
+                
+            }
+            
+        }
+        catch(Exception e){
+            System.err.println(e.toString());
+        }
+        finally{
+            if (resultset != null) { try { resultset.close(); resultset = null; } catch (Exception e) {} }
+            
+            if (pstSelect != null) { try { pstSelect.close(); pstSelect = null; } catch (Exception e) {} }
+            
+            if (pstUpdate != null) { try { pstUpdate.close(); pstUpdate = null; } catch (Exception e) {} }
+        }
+        
+    }
+    
 }

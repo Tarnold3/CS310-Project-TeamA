@@ -3,7 +3,9 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
+
 package edu.jsu.mcis.cs310.tas_sp21;
+
 import java.sql.Timestamp;
 import java.util.Locale;
 import java.time.LocalTime;
@@ -234,3 +236,4 @@ public class Punch {
         }
     }
 }
+
